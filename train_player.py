@@ -8,7 +8,9 @@ This script:
 """
 
 import argparse
+import hashlib
 import logging
+import subprocess
 from pathlib import Path
 from collections import deque
 import chess
@@ -26,6 +28,30 @@ from maia3.utils import get_all_possible_moves, seed_everything
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+
+
+def _git_sha() -> str:
+    """Short git SHA of this training script's repo, or 'unknown'."""
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=Path(__file__).resolve().parent, text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except Exception:
+        return "unknown"
+
+
+def _file_sha256(path: str) -> str:
+    """sha256 of a file (e.g. the training PGN), or 'unknown'."""
+    try:
+        h = hashlib.sha256()
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(1 << 20), b""):
+                h.update(chunk)
+        return h.hexdigest()
+    except Exception:
+        return "unknown"
 
 
 class PlayerGameDataset(Dataset):
@@ -348,10 +374,14 @@ def main():
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # Provenance computed once (stamped into every saved checkpoint)
+    pgn_sha = _file_sha256(args.pgn)
+
     logger.info(f"Training {args.base_model} on {len(dataset)} positions")
     logger.info(f"Train: {train_size}, Val: {val_size}")
     logger.info(f"Output: {output_path}")
     logger.info(f"Player ELO: {dataset.player_elo}")
+    logger.info(f"Provenance: git={_git_sha()} pgn_sha256={pgn_sha[:12]}...")
 
     best_val_acc = 0.0
     for epoch in range(args.epochs):
@@ -373,6 +403,13 @@ def main():
                 "player_only": not args.all_positions,
                 "epochs": args.epochs,
                 "lr": args.lr,
+                # Provenance (so a checkpoint records exactly what produced it)
+                "train_git_sha": _git_sha(),
+                "pgn_sha256": pgn_sha,
+                "pgn_path": args.pgn,
+                "seed": args.seed,
+                "trained_at": __import__("datetime").datetime.now().isoformat(timespec="seconds"),
+                "val_accuracy": best_val_acc,
             }, output_path)
             logger.info(f"  Saved best checkpoint to {output_path}")
 

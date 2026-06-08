@@ -154,3 +154,26 @@ made the model's entropy match his at T=1.0, so sharpening now *overshoots*:
 Net: D0 (inference history) + D1 (player-only data) together took opening JS **0.514 → 0.026** (20×)
 and top-1 match **31% → 95.5%**, with the model now matching carangelmx's entropy and 1.e4 frequency.
 No temperature tuning required — keep T=1.0.
+
+---
+
+## Model provenance & recovery (go back to any prior model)
+
+`models.json` is the manifest — one entry per checkpoint with its **sha256**, embedded metadata
+(base_model, Elo, hyperparams), curated metrics/status, and a hosting URL. Regenerate with
+`python build_manifest.py` after any new run.
+
+Two independent ways to restore a prior model:
+1. **By weights** — load the `.pt` directly (local `checkpoints/`, or the hosted release asset).
+   `NeuralTwinModel` auto-reads `base_model`/`elo` from the checkpoint.
+2. **By recipe** — re-train from `train_player.py` + the row's hyperparameters + the raw PGN + `--seed`
+   (functionally equivalent; GPU nondeterminism means not bit-exact).
+
+Off-machine copies (survive disk loss):
+- **corrected-baseline** (deployed): release `carangelmx-twin-v1`
+- **v5_final** (retired): release `carangelmx-twin-v5_final`
+- v1/v2/v5/v5_elo: local only (superseded; recoverable by recipe).
+
+**Provenance stamping:** since this commit, every new checkpoint embeds `train_git_sha`, `pgn_sha256`,
+`seed`, `trained_at`, and `val_accuracy`, so a model file records exactly the code + data that made it.
+(Older checkpoints predate this; their provenance is the `models.json` row + this log.)
