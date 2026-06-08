@@ -122,5 +122,35 @@ earlier "wrong opening" read was the D0 inference bug, not training. Residual ga
 root** (move-1 White: model e4 73.5% vs player 97.6%) and over-softness (handled by T≈0.5).
 
 ### Sweep results (appended by run_experiments.py)
-| name | model | epochs | lr | blocks | JS (agg, W/B) | top1 | entropy m/p |
-|------|-------|--------|----|--------|---------------|------|-------------|
+| name | model | epochs | lr | blocks | JS (agg, W/B) | top1 | entropy m/p | duration |
+|------|-------|--------|----|--------|---------------|------|-------------|----------|
+| corrected-baseline | maia3-23m | 10 | 1e-4 | 2 | **0.0260** (W 0.023/B 0.030) | 95.5% | 0.54 vs 0.55 (Δ −0.056 vs 0.082) | ~31 min train (32m27s wall) |
+
+Checkpoint: `checkpoints/sweep/carangelmx_maia3-23m_corrected-baseline.pt` (87.6 MB).
+Eval at T=1.0. carangelmx median Elo 2155. RTX 5060 Ti.
+
+### Corrected-baseline: what player-only training (D1) bought
+Beyond the inference fix, training only on carangelmx's own moves was **not** mere refinement:
+
+| Metric | v5_final (polluted data) + best T | corrected-baseline (player-only), T=1.0 |
+|--------|-----------------------------------|------------------------------------------|
+| Aggregate JS | 0.049 (needed T=0.5) | **0.026** |
+| Aggregate top1-match | 92.8% | **95.5%** |
+| top1-mass | 87.9% | 87.2% |
+| Model entropy vs player | 1.14–1.38 vs 0.5 (too soft) | **0.54 vs 0.55 (matched)** |
+| Move-1 White e4 | 73.5% (player 97.6%) | **99.4%** (root gap closed) |
+
+**Key insight — player-only training obsoleted the temperature hack.** The old checkpoint was too
+soft (entropy ~1.2 bits) and needed T≈0.5 to fake carangelmx's sharpness. Training on his moves only
+made the model's entropy match his at T=1.0, so sharpening now *overshoots*:
+
+| Temperature | v5_final JS | corrected-baseline JS |
+|-------------|-------------|-----------------------|
+| 1.0 | 0.082 | **0.026** (best) |
+| 0.7 | 0.052 | 0.032 |
+| 0.5 | **0.049** (best) | 0.043 |
+| 0.3 | 0.062 | — |
+
+Net: D0 (inference history) + D1 (player-only data) together took opening JS **0.514 → 0.026** (20×)
+and top-1 match **31% → 95.5%**, with the model now matching carangelmx's entropy and 1.e4 frequency.
+No temperature tuning required — keep T=1.0.
