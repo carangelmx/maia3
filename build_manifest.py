@@ -48,8 +48,18 @@ CURATED = {
         "notes": "v1: 23M, player-only, 2 unfrozen blocks; Elo 2155. Superseded by more-blocks (v2) "
                  "which wins the post-ply-10 gate.",
     },
+    "xml3gn4r4c_maia3-23m_v1": {
+        "version": "v1", "player": "xml3gn4r4c", "status": "deployed",
+        "metrics": {"post_ply10_top1": 0.265, "post_ply10_perplexity": 16.75,
+                    "middlegame_top1": 0.227, "opening_recall_top1": 0.675},
+        "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/"
+                     "xml3gn4r4c-twin-v1/xml3gn4r4c_maia3-23m_v1.pt",
+        "notes": "xml3gn4r4c (~2298 blitz): 23M full fine-tune, 4,988 games (newest 400 held out), "
+                 "Elo 2298. Post-ply-10 26.5% / ppl 16.75 on the unseen temporal test. "
+                 "Built via CREATE_A_TWIN.md.",
+    },
     "carangelmx_maia3-23m_v3": {
-        "version": "v3", "status": "deployed",
+        "version": "v3", "player": "carangelmx", "status": "deployed",
         "metrics": {"post_ply10_top1": 0.294, "post_ply10_perplexity": 15.3,
                     "middlegame_top1": 0.262, "endgame_top1": 0.228},
         "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/"
@@ -145,7 +155,8 @@ def main():
 
     manifest = {
         "generated_at": dt.datetime.now().isoformat(timespec="seconds"),
-        "player": "carangelmx",
+        "players": sorted({m.get("player") or m.get("player_name") for m in models
+                           if m.get("player") or m.get("player_name")}),
         "models": models,
     }
     Path(args.out).write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
