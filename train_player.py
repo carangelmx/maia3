@@ -66,7 +66,8 @@ class PlayerGameDataset(Dataset):
     """Dataset from PGN file: positions up to move 60 in each game."""
 
     def __init__(self, pgn_path, all_moves_dict, max_move=60, history_depth=8,
-                 player_name=None, player_only=True, holdout_frac=0.0, holdout_seed=42):
+                 player_name=None, player_only=True, holdout_frac=0.0, holdout_seed=42,
+                 keep_recent=0, test_recent=0):
         self.pgn_path = pgn_path
         self.all_moves_dict = all_moves_dict
         self.max_move = max_move
@@ -78,6 +79,11 @@ class PlayerGameDataset(Dataset):
         # Exclude a deterministic set of whole games (reserved for eval_moves.py).
         self.holdout_frac = holdout_frac
         self.holdout_seed = holdout_seed
+        # Temporal split (file is reverse-chronological: index 0 = newest game).
+        #   keep_recent>0: drop games older than the newest `keep_recent` (coherence filter).
+        #   test_recent>0: reserve the newest `test_recent` games for testing (exclude from train).
+        self.keep_recent = keep_recent
+        self.test_recent = test_recent
         self.samples = []
         self.player_elo = 1500  # Player's own median, computed in _load_pgn
 
@@ -105,6 +111,13 @@ class PlayerGameDataset(Dataset):
                 if game is None:
                     break
                 game_count += 1
+
+                # Temporal split by raw file index (0 = newest).
+                gi = game_count - 1
+                if self.test_recent and gi < self.test_recent:
+                    continue  # newest games reserved for testing
+                if self.keep_recent and gi >= self.keep_recent:
+                    continue  # too old — drop (coherence filter)
 
                 try:
                     white_elo = int(game.headers.get("WhiteElo", 1500))
@@ -331,6 +344,12 @@ def main():
                         help="Exclude this fraction of games (by stable hash) from training, "
                              "reserving them for eval_moves.py (matching --holdout-seed)")
     parser.add_argument("--holdout-seed", type=int, default=42)
+    parser.add_argument("--keep-recent", type=int, default=0,
+                        help="Temporal filter: keep only the newest N games (0 = all). "
+                             "File is reverse-chronological (index 0 = newest).")
+    parser.add_argument("--test-recent", type=int, default=0,
+                        help="Reserve the newest N games for testing (excluded from training). "
+                             "eval_moves.py --test-recent N selects the same games.")
 
     args = parser.parse_args()
 
@@ -373,6 +392,8 @@ def main():
         player_only=not args.all_positions,
         holdout_frac=args.holdout_frac,
         holdout_seed=args.holdout_seed,
+        keep_recent=args.keep_recent,
+        test_recent=args.test_recent,
     )
 
     if len(dataset) == 0:
@@ -443,6 +464,8 @@ def main():
                 "seed": args.seed,
                 "holdout_frac": args.holdout_frac,
                 "holdout_seed": args.holdout_seed,
+                "keep_recent": args.keep_recent,
+                "test_recent": args.test_recent,
                 "trained_at": __import__("datetime").datetime.now().isoformat(timespec="seconds"),
                 "val_accuracy": best_val_acc,
             }, output_path)
