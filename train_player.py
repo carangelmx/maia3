@@ -54,11 +54,19 @@ def _file_sha256(path: str) -> str:
         return "unknown"
 
 
+def _is_holdout(game_key: str, frac: float, seed: int) -> bool:
+    """Deterministic per-game holdout — MUST match eval_moves.is_holdout."""
+    if frac <= 0.0:
+        return False
+    h = hashlib.md5(f"{seed}:{game_key}".encode()).hexdigest()
+    return (int(h[:8], 16) % 1000) < frac * 1000
+
+
 class PlayerGameDataset(Dataset):
     """Dataset from PGN file: positions up to move 60 in each game."""
 
     def __init__(self, pgn_path, all_moves_dict, max_move=60, history_depth=8,
-                 player_name=None, player_only=True):
+                 player_name=None, player_only=True, holdout_frac=0.0, holdout_seed=42):
         self.pgn_path = pgn_path
         self.all_moves_dict = all_moves_dict
         self.max_move = max_move
@@ -67,6 +75,9 @@ class PlayerGameDataset(Dataset):
         # targets (D1 fix), and Elo is attributed to this player (D2 fix).
         self.player_name = (player_name or "").lower()
         self.player_only = player_only and bool(self.player_name)
+        # Exclude a deterministic set of whole games (reserved for eval_moves.py).
+        self.holdout_frac = holdout_frac
+        self.holdout_seed = holdout_seed
         self.samples = []
         self.player_elo = 1500  # Player's own median, computed in _load_pgn
 
@@ -110,6 +121,13 @@ class PlayerGameDataset(Dataset):
                     skipped_games += 1
                     continue
 
+                # Exclude held-out games entirely (reserved for eval_moves.py).
+                game_moves = list(game.mainline_moves())
+                if self.holdout_frac > 0.0:
+                    game_key = ";".join(m.uci() for m in game_moves[:40])
+                    if _is_holdout(game_key, self.holdout_frac, self.holdout_seed):
+                        continue
+
                 # Attribute Elo to the modeled player only (D2 fix).
                 if self.player_only and player_clr == chess.WHITE and white_elo > 0:
                     player_elos.append(white_elo)
@@ -126,7 +144,7 @@ class PlayerGameDataset(Dataset):
                 board_history = deque([tokenize_board(board)], maxlen=self.history_depth)
                 move_count = 0
 
-                for move in game.mainline_moves():
+                for move in game_moves:
                     if move_count >= self.max_move:
                         break
 
@@ -303,10 +321,16 @@ def main():
     parser.add_argument("--max-move", type=int, default=60, help="Max move number per game")
     parser.add_argument("--history-depth", type=int, default=8, help="Board history depth")
     parser.add_argument("--num-blocks-to-train", type=int, default=2,
-                        help="Number of trailing transformer blocks to unfreeze (D3)")
+                        help="Trailing transformer blocks to unfreeze (D3). -1 = all (full fine-tune)")
     parser.add_argument("--all-positions", action="store_true",
                         help="Train on ALL positions incl. opponent moves (legacy). "
                              "Default trains only on the named player's own moves (D1).")
+    parser.add_argument("--patience", type=int, default=0,
+                        help="Early stop after N epochs without val improvement (0 = off)")
+    parser.add_argument("--holdout-frac", type=float, default=0.0,
+                        help="Exclude this fraction of games (by stable hash) from training, "
+                             "reserving them for eval_moves.py (matching --holdout-seed)")
+    parser.add_argument("--holdout-seed", type=int, default=42)
 
     args = parser.parse_args()
 
@@ -347,6 +371,8 @@ def main():
         history_depth=args.history_depth,
         player_name=args.player,
         player_only=not args.all_positions,
+        holdout_frac=args.holdout_frac,
+        holdout_seed=args.holdout_seed,
     )
 
     if len(dataset) == 0:
@@ -361,9 +387,14 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
 
-    # Freeze strategy (D3: configurable, was hardcoded to 2)
-    freeze_all_but_last_blocks(model, num_blocks_to_train=args.num_blocks_to_train)
-    logger.info(f"Training last {args.num_blocks_to_train} transformer blocks")
+    # Freeze strategy (D3: configurable, was hardcoded to 2).
+    # --num-blocks-to-train -1 => train ALL blocks (full fine-tune; literature-preferred).
+    total_blocks = len(model.transformer.layers)
+    n_train = total_blocks if args.num_blocks_to_train < 0 else args.num_blocks_to_train
+    args.num_blocks_to_train = n_train  # record the resolved value in metadata
+    freeze_all_but_last_blocks(model, num_blocks_to_train=n_train)
+    logger.info(f"Training last {n_train}/{total_blocks} transformer blocks"
+                f"{' (full fine-tune)' if n_train >= total_blocks else ''}")
 
     # Optimizer
     optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-2)
@@ -384,6 +415,7 @@ def main():
     logger.info(f"Provenance: git={_git_sha()} pgn_sha256={pgn_sha[:12]}...")
 
     best_val_acc = 0.0
+    epochs_since_improve = 0
     for epoch in range(args.epochs):
         train_policy_loss, train_value_loss = train_epoch(model, train_loader, optimizer, device, all_moves_dict)
         val_acc = eval_epoch(model, val_loader, device)
@@ -394,6 +426,7 @@ def main():
 
         if val_acc > best_val_acc:
             best_val_acc = val_acc
+            epochs_since_improve = 0
             torch.save({
                 "model_state_dict": model.state_dict(),
                 "player_elo": dataset.player_elo,
@@ -408,10 +441,17 @@ def main():
                 "pgn_sha256": pgn_sha,
                 "pgn_path": args.pgn,
                 "seed": args.seed,
+                "holdout_frac": args.holdout_frac,
+                "holdout_seed": args.holdout_seed,
                 "trained_at": __import__("datetime").datetime.now().isoformat(timespec="seconds"),
                 "val_accuracy": best_val_acc,
             }, output_path)
             logger.info(f"  Saved best checkpoint to {output_path}")
+        else:
+            epochs_since_improve += 1
+            if args.patience > 0 and epochs_since_improve >= args.patience:
+                logger.info(f"  Early stop: no val improvement for {args.patience} epochs")
+                break
 
     logger.info(f"Training complete. Best validation accuracy: {best_val_acc:.4f}")
 

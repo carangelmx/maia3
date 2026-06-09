@@ -40,20 +40,22 @@ CURATED = {
                  "Pre-D1. Needed T=0.5. Retired in favor of corrected-baseline.",
     },
     "carangelmx_maia3-23m_corrected-baseline": {
-        "version": "corrected-baseline", "status": "deployed",
-        "metrics": {"opening_top1_match": 0.955, "opening_js": 0.026},
+        "version": "corrected-baseline", "status": "previous",
+        "metrics": {"opening_top1_match": 0.955, "opening_js": 0.026,
+                    "post_ply10_top1": 0.360},
         "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/"
                      "carangelmx-twin-v1/carangelmx_maia3-23m_corrected-baseline.pt",
-        "deployed_sha256": "8ab3e93dfc66",  # the deployed sample + hosted asset (original build)
-        "notes": "23M, player-only (D1) + per-color Elo (D2); Elo 2155. Deployed sample. "
-                 "The local sweep .pt was re-run (provenance-stamped) with identical weights; its "
-                 "file sha differs from deployed_sha256 only by the embedded provenance timestamp.",
+        "notes": "v1: 23M, player-only, 2 unfrozen blocks; Elo 2155. Superseded by more-blocks (v2) "
+                 "which wins the post-ply-10 gate.",
     },
     "carangelmx_maia3-23m_more-blocks": {
-        "version": "more-blocks", "status": "candidate",
-        "metrics": {"opening_top1_match": 0.964, "opening_js": 0.0239},
-        "notes": "Like corrected-baseline but 4 unfrozen blocks. Best on openings; "
-                 "pending middlegame eval before promotion.",
+        "version": "more-blocks", "status": "deployed",
+        "metrics": {"opening_top1_match": 0.964, "opening_js": 0.0239,
+                    "post_ply10_top1": 0.397, "middlegame_top1": 0.465},
+        "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/"
+                     "carangelmx-twin-v2/carangelmx_maia3-23m_more-blocks.pt",
+        "notes": "v2 (DEPLOYED): 23M, player-only, 4 unfrozen blocks; Elo 2155. Wins post-ply-10 "
+                 "(39.7% vs 36.0%) and middlegame (46.5% vs 37.8%) over v1.",
     },
     "carangelmx_maia3-23m_lower-lr": {
         "version": "lower-lr", "status": "candidate",
@@ -114,7 +116,7 @@ def main():
         models.append(describe(p))
 
     # Stable order: deployed first, then by version/file
-    order = {"deployed": 0, "retired": 1, "superseded": 2}
+    order = {"deployed": 0, "previous": 1, "candidate": 2, "retired": 3, "superseded": 4}
     models.sort(key=lambda m: (order.get(m.get("status"), 9), m.get("version", m["file"])))
 
     manifest = {
