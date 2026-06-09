@@ -221,6 +221,15 @@ gradients = better.* **Honest fidelity ≈ 29% post-ply-10** on truly-unseen rec
 figures were test-leakage). Caveat: train Elo 2183 vs test 2324 (~140 gap; understates absolutes, not
 the ranking). **Next: deploy a full-FT model trained on all newest-6,000 (no holdout) as v3.**
 
+### Reproducibility check (2026-06-09)
+`create_twin.py --player carangelmx --skip-deploy` re-ran the recipe end to end and **reproduced
+temporal-8blk bit-for-bit**: identical val curve every epoch (best 0.3943 @ epoch 4) and identical
+post-ply-10 gate (29.4% / ppl 15.26). Same seed → deterministic training. Cross-check on the same
+newest-600 quiz: deployed **v3 scores 39.1% / ppl 8.51 — inflated by memorization** (v3 trained on
+those 600 games), vs the honest **29.4%** for the holdout models. Confirms (a) the pipeline is
+deterministic/reproducible and (b) the holdout-confound: a model always looks better on a test it
+trained on.
+
 ---
 
 ## Model provenance & recovery (go back to any prior model)
