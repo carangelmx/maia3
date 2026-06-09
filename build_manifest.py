@@ -44,7 +44,26 @@ CURATED = {
         "metrics": {"opening_top1_match": 0.955, "opening_js": 0.026},
         "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/"
                      "carangelmx-twin-v1/carangelmx_maia3-23m_corrected-baseline.pt",
-        "notes": "23M, player-only (D1) + per-color Elo (D2); Elo 2155. Deployed sample.",
+        "deployed_sha256": "8ab3e93dfc66",  # the deployed sample + hosted asset (original build)
+        "notes": "23M, player-only (D1) + per-color Elo (D2); Elo 2155. Deployed sample. "
+                 "The local sweep .pt was re-run (provenance-stamped) with identical weights; its "
+                 "file sha differs from deployed_sha256 only by the embedded provenance timestamp.",
+    },
+    "carangelmx_maia3-23m_more-blocks": {
+        "version": "more-blocks", "status": "candidate",
+        "metrics": {"opening_top1_match": 0.964, "opening_js": 0.0239},
+        "notes": "Like corrected-baseline but 4 unfrozen blocks. Best on openings; "
+                 "pending middlegame eval before promotion.",
+    },
+    "carangelmx_maia3-23m_lower-lr": {
+        "version": "lower-lr", "status": "candidate",
+        "metrics": {"opening_top1_match": 0.963, "opening_js": 0.0257},
+        "notes": "Like corrected-baseline but lr 5e-5. ~tied on openings.",
+    },
+    "carangelmx_maia3-23m_longer": {
+        "version": "longer", "status": "candidate",
+        "metrics": {"opening_top1_match": 0.955, "opening_js": 0.0260},
+        "notes": "Like corrected-baseline but 15 epochs. No opening gain over 10.",
     },
 }
 

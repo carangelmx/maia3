@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-06-08T15:05:50",
+  "generated_at": "2026-06-08T17:39:12",
   "player": "carangelmx",
   "models": [
     {
       "file": "checkpoints/sweep/carangelmx_maia3-23m_corrected-baseline.pt",
-      "sha256": "8ab3e93dfc66673cfa46390355877009147f0923d93bf93db1ab779ba84d30ef",
+      "sha256": "b73d4b6918d6eb241ee9796241d4c53c0f070fac140b2bd168d3e30c8cfaff89",
       "size_mb": 87.6,
       "player_name": "carangelmx",
       "base_model": "maia3-23m",
@@ -13,6 +13,12 @@
       "player_only": true,
       "epochs": 10,
       "lr": 0.0001,
+      "seed": 42,
+      "train_git_sha": "6753df4",
+      "pgn_sha256": "81181d710a07c8ea14b2a8b43acef4298607e57ab25affdd58c9f89d54b610df",
+      "pgn_path": "C:\\CR\\chess\\data\\raw\\carangelmx_lichess_all.pgn",
+      "trained_at": "2026-06-08T15:34:32",
+      "val_accuracy": 0.3505498727368775,
       "version": "corrected-baseline",
       "status": "deployed",
       "metrics": {
@@ -20,7 +26,8 @@
         "opening_js": 0.026
       },
       "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/carangelmx-twin-v1/carangelmx_maia3-23m_corrected-baseline.pt",
-      "notes": "23M, player-only (D1) + per-color Elo (D2); Elo 2155. Deployed sample."
+      "deployed_sha256": "8ab3e93dfc66",
+      "notes": "23M, player-only (D1) + per-color Elo (D2); Elo 2155. Deployed sample. The local sweep .pt was re-run (provenance-stamped) with identical weights; its file sha differs from deployed_sha256 only by the embedded provenance timestamp."
     },
     {
       "file": "checkpoints/carangelmx_maia3-23m_v5_final.pt",
@@ -69,6 +76,81 @@
       "player_elo": 2141,
       "version": "v5_elo",
       "status": "superseded"
+    },
+    {
+      "file": "checkpoints/sweep/carangelmx_maia3-23m_longer.pt",
+      "sha256": "c54de3b81e10375270f1873422f6f6bb2713378d680686f61915974ff79235c3",
+      "size_mb": 87.6,
+      "player_name": "carangelmx",
+      "base_model": "maia3-23m",
+      "player_elo": 2155,
+      "num_blocks_to_train": 2,
+      "player_only": true,
+      "epochs": 15,
+      "lr": 0.0001,
+      "seed": 42,
+      "train_git_sha": "6753df4",
+      "pgn_sha256": "81181d710a07c8ea14b2a8b43acef4298607e57ab25affdd58c9f89d54b610df",
+      "pgn_path": "C:\\CR\\chess\\data\\raw\\carangelmx_lichess_all.pgn",
+      "trained_at": "2026-06-08T17:09:08",
+      "val_accuracy": 0.3505498727368775,
+      "version": "longer",
+      "status": "candidate",
+      "metrics": {
+        "opening_top1_match": 0.955,
+        "opening_js": 0.026
+      },
+      "notes": "Like corrected-baseline but 15 epochs. No opening gain over 10."
+    },
+    {
+      "file": "checkpoints/sweep/carangelmx_maia3-23m_lower-lr.pt",
+      "sha256": "1f889f9cc3a2da4d0493d26c8d8a4a66416f1d767376d786eefaa8c92e865117",
+      "size_mb": 87.6,
+      "player_name": "carangelmx",
+      "base_model": "maia3-23m",
+      "player_elo": 2155,
+      "num_blocks_to_train": 2,
+      "player_only": true,
+      "epochs": 10,
+      "lr": 5e-05,
+      "seed": 42,
+      "train_git_sha": "6753df4",
+      "pgn_sha256": "81181d710a07c8ea14b2a8b43acef4298607e57ab25affdd58c9f89d54b610df",
+      "pgn_path": "C:\\CR\\chess\\data\\raw\\carangelmx_lichess_all.pgn",
+      "trained_at": "2026-06-08T16:40:52",
+      "val_accuracy": 0.34171348989098593,
+      "version": "lower-lr",
+      "status": "candidate",
+      "metrics": {
+        "opening_top1_match": 0.963,
+        "opening_js": 0.0257
+      },
+      "notes": "Like corrected-baseline but lr 5e-5. ~tied on openings."
+    },
+    {
+      "file": "checkpoints/sweep/carangelmx_maia3-23m_more-blocks.pt",
+      "sha256": "650ceca6005dbcc9cf4d7f3d819bb5c24c317e53c57720e47299f9e7f2fb4a20",
+      "size_mb": 87.6,
+      "player_name": "carangelmx",
+      "base_model": "maia3-23m",
+      "player_elo": 2155,
+      "num_blocks_to_train": 4,
+      "player_only": true,
+      "epochs": 10,
+      "lr": 0.0001,
+      "seed": 42,
+      "train_git_sha": "6753df4",
+      "pgn_sha256": "81181d710a07c8ea14b2a8b43acef4298607e57ab25affdd58c9f89d54b610df",
+      "pgn_path": "C:\\CR\\chess\\data\\raw\\carangelmx_lichess_all.pgn",
+      "trained_at": "2026-06-08T16:03:14",
+      "val_accuracy": 0.35559237381741343,
+      "version": "more-blocks",
+      "status": "candidate",
+      "metrics": {
+        "opening_top1_match": 0.964,
+        "opening_js": 0.0239
+      },
+      "notes": "Like corrected-baseline but 4 unfrozen blocks. Best on openings; pending middlegame eval before promotion."
     }
   ]
 }

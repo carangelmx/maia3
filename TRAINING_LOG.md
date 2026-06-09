@@ -121,13 +121,25 @@ Key correction: the twin *had* learned carangelmx's Sicilian (1...c5 = 96.3% top
 earlier "wrong opening" read was the D0 inference bug, not training. Residual gap is the **opening
 root** (move-1 White: model e4 73.5% vs player 97.6%) and over-softness (handled by T≈0.5).
 
-### Sweep results (appended by run_experiments.py)
-| name | model | epochs | lr | blocks | JS (agg, W/B) | top1 | entropy m/p | duration |
-|------|-------|--------|----|--------|---------------|------|-------------|----------|
-| corrected-baseline | maia3-23m | 10 | 1e-4 | 2 | **0.0260** (W 0.023/B 0.030) | 95.5% | 0.54 vs 0.55 (Δ −0.056 vs 0.082) | ~31 min train (32m27s wall) |
+### Sweep results (opening fidelity, T=1.0, RTX 5060 Ti, Elo 2155)
+| name | epochs | lr | blocks | JS (agg, W/B) | top1 | entropy m/p | train |
+|------|--------|----|--------|---------------|------|-------------|-------|
+| corrected-baseline | 10 | 1e-4 | 2 | 0.0260 (W .023/B .030) | 95.5% | 0.54/0.55 | 31m14s |
+| **more-blocks** | 10 | 1e-4 | **4** | **0.0239** (W .023/B .025) | **96.4%** | 0.56/0.55 | 31m58s |
+| lower-lr | 10 | 5e-5 | 2 | 0.0257 (W .024/B .028) | 96.3% | 0.58/0.55 | 31m14s |
+| longer | 15 | 1e-4 | 2 | 0.0260 (W .023/B .030) | 95.5% | 0.54/0.55 | 46m24s |
 
-Checkpoint: `checkpoints/sweep/carangelmx_maia3-23m_corrected-baseline.pt` (87.6 MB).
-Eval at T=1.0. carangelmx median Elo 2155. RTX 5060 Ti.
+**Grid conclusion (2026-06-08).** On openings the field is tight (all JS 0.024–0.026, top-1 95.5–96.4%).
+- **more-blocks (4 unfrozen)** is marginally best — JS 0.0239, top-1 96.4%, entropy still matched — at
+  the same ~32 min cost. The likely real payoff of extra capacity is **middlegame**, which this grid
+  does not measure.
+- **lower-lr**: ~tied (top-1 96.3%, JS 0.0257), entropy a touch high (0.58).
+- **longer (15 ep)**: identical to corrected-baseline — +5 epochs / +15 min bought nothing on openings.
+- **Reproducibility confirmed**: the corrected-baseline re-run reproduced exactly (JS 0.0260, 95.5%,
+  31m14s, val_acc identical). The new checkpoints are provenance-stamped (`train_git_sha=6753df4`).
+
+Decision deferred to the **middlegame eval** (ROADMAP frontier): pick between more-blocks and
+corrected-baseline once we can score by game phase, not opening top-1 alone.
 
 ### Corrected-baseline: what player-only training (D1) bought
 Beyond the inference fix, training only on carangelmx's own moves was **not** mere refinement:
