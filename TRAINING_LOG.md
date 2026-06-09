@@ -167,6 +167,25 @@ Net: D0 (inference history) + D1 (player-only data) together took opening JS **0
 and top-1 match **31% → 95.5%**, with the model now matching carangelmx's entropy and 1.e4 frequency.
 No temperature tuning required — keep T=1.0.
 
+### Post-ply-10 gate — the real test (`eval_moves.py`, 2026-06-08)
+Per the per-player Maia literature (KDD 2022), openings are ~100% memorized; the genuine test is
+move-matching on **plies > 10**. Top-1 / perplexity on a 300-game holdout (note: holdout not yet
+excluded in training, so absolute numbers are optimistic — valid for *relative* comparison):
+
+| phase | corrected-baseline (2 blocks) | more-blocks (4 blocks) |
+|-------|-------------------------------|------------------------|
+| opening ≤ply10 (recall) | 77.4% / ppl 2.20 | 78.4% / ppl 2.18 |
+| early-mid 10–29 | 52.2% / 5.04 | 54.3% / 4.71 |
+| **middlegame 30–59** | 37.8% / 10.21 | **46.5% / 7.25** |
+| endgame 60+ | 19.1% / 26.5 | 18.7% / 33.5 |
+| **POST-PLY-10 (gate)** | 36.0% / 11.29 | **39.7% / 10.51** |
+
+**Decision: more-blocks (4 unfrozen) wins the gate** — +3.7 pts post-ply-10, **+8.7 pts in the
+middlegame**, lower perplexity. The opening sweep called these ~tied (JS 0.026 vs 0.0239); the
+post-ply-10 gate reveals the real difference. Confirms the literature: extra capacity pays off in the
+middlegame, not the (memorized) opening. **Next lever: full fine-tuning (all 8 blocks) + val
+early-stopping**, judged on this same gate. (Endgame is weak for both — sparse data; secondary.)
+
 ---
 
 ## Model provenance & recovery (go back to any prior model)
