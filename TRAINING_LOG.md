@@ -199,8 +199,27 @@ with the literature warning (<~5k games overfits; we have ~6,900 after holdout).
 **Confound:** full-ft is judged on unseen games; the frozen models trained on the whole PGN, so their
 holdout numbers are inflated by memorization. The endgame slice (sparse, ~unseen for all) is the
 fairest — and full-ft *wins* it (26.5% vs ~19%). **A clean decision needs the frozen candidates
-retrained with the same `--holdout-frac 0.1`**, then all three eval'd on the unseen holdout.
-Next: retrain corrected-baseline(2blk) and more-blocks(4blk) with holdout excluded.
+retrained with the same holdout**, then all three eval'd on the unseen test.
+
+### CLEAN temporal test (2026-06-08) — full fine-tuning wins, decisively
+Resolved the confound with a proper temporal split (`--keep-recent 6000 --test-recent 600`): the player
+improved (2017~2070 → 2021~2324), so we drop the stale oldest games, keep the newest 6,000, train on
+games 600–6,000 (~5,400, median Elo 2183), and **hold out the newest 600 as a future-prediction test**
+(Elo ~2324, never trained on). All three trained on the *identical* split, early-stop on val. Post-ply-10
+gate on the unseen 600:
+
+| candidate | val acc | POST-PLY-10 top-1 | perplexity | middlegame | endgame |
+|-----------|---------|-------------------|------------|------------|---------|
+| 2 blocks | 0.333 | 25.4% | 30.2 | 20.9% | 17.7% |
+| 4 blocks | 0.334 | 24.8% | 31.5 | 20.4% | 17.0% |
+| **8 blocks (full fine-tune)** | **0.394** | **29.4%** | **15.3** | **26.2%** | **22.8%** |
+
+**Verdict: full fine-tuning wins** — +4 pts post-ply-10, **perplexity halved** (far better calibrated),
++5 middlegame, +5 endgame. **2 vs 4 blocks tie on a clean test** — the earlier "more-blocks wins (v2)"
+was the holdout confound (v2 memorized the test). Confirms KDD 2022: *freezing only hurts; deeper
+gradients = better.* **Honest fidelity ≈ 29% post-ply-10** on truly-unseen recent games (the 36–40%
+figures were test-leakage). Caveat: train Elo 2183 vs test 2324 (~140 gap; understates absolutes, not
+the ranking). **Next: deploy a full-FT model trained on all newest-6,000 (no holdout) as v3.**
 
 ---
 
