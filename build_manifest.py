@@ -48,14 +48,31 @@ CURATED = {
         "notes": "v1: 23M, player-only, 2 unfrozen blocks; Elo 2155. Superseded by more-blocks (v2) "
                  "which wins the post-ply-10 gate.",
     },
+    "carangelmx_maia3-23m_v3": {
+        "version": "v3", "status": "deployed",
+        "metrics": {"post_ply10_top1": 0.294, "post_ply10_perplexity": 15.3,
+                    "middlegame_top1": 0.262, "endgame_top1": 0.228},
+        "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/"
+                     "carangelmx-twin-v3/carangelmx_maia3-23m_v3.pt",
+        "notes": "v3 (DEPLOYED): 23M, FULL fine-tune (8 blocks), newest 6,000 games; Elo 2195. Wins "
+                 "the clean temporal future-test: post-ply-10 29.4% / ppl 15.3 vs ~25% / ppl 30 for "
+                 "frozen 2-4 block variants. Honest unseen-recent fidelity ~29%.",
+    },
     "carangelmx_maia3-23m_more-blocks": {
-        "version": "more-blocks", "status": "deployed",
+        "version": "more-blocks", "status": "previous",
         "metrics": {"opening_top1_match": 0.964, "opening_js": 0.0239,
                     "post_ply10_top1": 0.397, "middlegame_top1": 0.465},
         "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/"
                      "carangelmx-twin-v2/carangelmx_maia3-23m_more-blocks.pt",
-        "notes": "v2 (DEPLOYED): 23M, player-only, 4 unfrozen blocks; Elo 2155. Wins post-ply-10 "
-                 "(39.7% vs 36.0%) and middlegame (46.5% vs 37.8%) over v1.",
+        "notes": "v2 (previous deploy): 23M, 4 unfrozen blocks; Elo 2155. Its post-ply-10 lead was a "
+                 "holdout confound (trained on the test games). Superseded by v3 (full fine-tune) on a "
+                 "clean temporal test.",
+    },
+    "carangelmx_maia3-23m_temporal-8blk": {
+        "version": "temporal-8blk", "status": "candidate",
+        "metrics": {"post_ply10_top1": 0.294, "post_ply10_perplexity": 15.3},
+        "notes": "Full fine-tune on the temporal split (newest 600 held out). The clean-test winner; "
+                 "v3 is the same recipe retrained on all newest-6,000 for deployment.",
     },
     "carangelmx_maia3-23m_lower-lr": {
         "version": "lower-lr", "status": "candidate",
