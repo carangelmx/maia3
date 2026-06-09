@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-08T18:54:43",
+  "generated_at": "2026-06-08T19:23:43",
   "player": "carangelmx",
   "models": [
     {
@@ -56,6 +56,31 @@
       },
       "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/carangelmx-twin-v1/carangelmx_maia3-23m_corrected-baseline.pt",
       "notes": "v1: 23M, player-only, 2 unfrozen blocks; Elo 2155. Superseded by more-blocks (v2) which wins the post-ply-10 gate."
+    },
+    {
+      "file": "checkpoints/sweep/carangelmx_maia3-23m_full-ft.pt",
+      "sha256": "1f9b1d6fc2e8163802477b1b11b6df356abf8f7da9eaf64abe479b425e9596ba",
+      "size_mb": 87.6,
+      "player_name": "carangelmx",
+      "base_model": "maia3-23m",
+      "player_elo": 2157,
+      "num_blocks_to_train": 8,
+      "player_only": true,
+      "epochs": 15,
+      "lr": 0.0001,
+      "seed": 42,
+      "train_git_sha": "cd1586f",
+      "pgn_sha256": "81181d710a07c8ea14b2a8b43acef4298607e57ab25affdd58c9f89d54b610df",
+      "pgn_path": "C:/CR/chess/data/raw/carangelmx_lichess_all.pgn",
+      "trained_at": "2026-06-08T18:58:53",
+      "val_accuracy": 0.4139730550082539,
+      "version": "full-ft",
+      "status": "candidate",
+      "metrics": {
+        "post_ply10_top1_unseen": 0.324,
+        "val_accuracy": 0.414
+      },
+      "notes": "Full fine-tune (all 8 blocks), holdout 10% excluded (true generalization test). Overfit: val peaked epoch 4 then declined; train loss 0.81. post-ply-10 32.4% on UNSEEN games (not directly comparable to frozen models that trained on the holdout)."
     },
     {
       "file": "checkpoints/sweep/carangelmx_maia3-23m_longer.pt",
@@ -154,24 +179,6 @@
       "player_elo": 2141,
       "version": "v5_elo",
       "status": "superseded"
-    },
-    {
-      "file": "checkpoints/sweep/carangelmx_maia3-23m_full-ft.pt",
-      "sha256": "2906952206a654309134d1cd51e9dfb8729c449043b4398ffb6ebfd7f0006fb3",
-      "size_mb": 87.6,
-      "player_name": "carangelmx",
-      "base_model": "maia3-23m",
-      "player_elo": 2157,
-      "num_blocks_to_train": 8,
-      "player_only": true,
-      "epochs": 15,
-      "lr": 0.0001,
-      "seed": 42,
-      "train_git_sha": "cd1586f",
-      "pgn_sha256": "81181d710a07c8ea14b2a8b43acef4298607e57ab25affdd58c9f89d54b610df",
-      "pgn_path": "C:/CR/chess/data/raw/carangelmx_lichess_all.pgn",
-      "trained_at": "2026-06-08T18:52:54",
-      "val_accuracy": 0.3816763405932158
     }
   ]
 }

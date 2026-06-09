@@ -180,11 +180,27 @@ excluded in training, so absolute numbers are optimistic — valid for *relative
 | endgame 60+ | 19.1% / 26.5 | 18.7% / 33.5 |
 | **POST-PLY-10 (gate)** | 36.0% / 11.29 | **39.7% / 10.51** |
 
-**Decision: more-blocks (4 unfrozen) wins the gate** — +3.7 pts post-ply-10, **+8.7 pts in the
-middlegame**, lower perplexity. The opening sweep called these ~tied (JS 0.026 vs 0.0239); the
-post-ply-10 gate reveals the real difference. Confirms the literature: extra capacity pays off in the
-middlegame, not the (memorized) opening. **Next lever: full fine-tuning (all 8 blocks) + val
-early-stopping**, judged on this same gate. (Endgame is weak for both — sparse data; secondary.)
+**Provisional: more-blocks (4 unfrozen) leads** — but see the confound below; these two models trained
+on the holdout, so their numbers are memorization-inflated. Promoted more-blocks as v2 on this basis.
+
+### Full fine-tuning (all 8 blocks) + holdout — overfitting + a confound (2026-06-08)
+Ran `--num-blocks-to-train -1 --holdout-frac 0.1 --patience 3` (all blocks, the held-out 10% of games
+excluded from training → a TRUE generalization test). Val acc peaked epoch 4 at **41.4%** then declined
+(train policy loss 3.9→0.81) → **clear overfitting**; early-stopping kept the epoch-4 best. Consistent
+with the literature warning (<~5k games overfits; we have ~6,900 after holdout).
+
+| post-ply-10 gate (300-game holdout) | corrected-baseline 2blk | more-blocks 4blk | full-ft 8blk |
+|-------------------------------------|-------------------------|------------------|--------------|
+| trained on these games? | yes (inflated) | yes (inflated) | **no (true test)** |
+| post-ply-10 top-1 | 36.0% | 39.7% | 32.4% |
+| middlegame 30–59 | 37.8% | 46.5% | 29.4% |
+| endgame 60+ | 19.1% | 18.7% | **26.5%** |
+
+**Confound:** full-ft is judged on unseen games; the frozen models trained on the whole PGN, so their
+holdout numbers are inflated by memorization. The endgame slice (sparse, ~unseen for all) is the
+fairest — and full-ft *wins* it (26.5% vs ~19%). **A clean decision needs the frozen candidates
+retrained with the same `--holdout-frac 0.1`**, then all three eval'd on the unseen holdout.
+Next: retrain corrected-baseline(2blk) and more-blocks(4blk) with holdout excluded.
 
 ---
 

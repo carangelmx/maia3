@@ -67,6 +67,13 @@ CURATED = {
         "metrics": {"opening_top1_match": 0.955, "opening_js": 0.0260},
         "notes": "Like corrected-baseline but 15 epochs. No opening gain over 10.",
     },
+    "carangelmx_maia3-23m_full-ft": {
+        "version": "full-ft", "status": "candidate",
+        "metrics": {"post_ply10_top1_unseen": 0.324, "val_accuracy": 0.414},
+        "notes": "Full fine-tune (all 8 blocks), holdout 10% excluded (true generalization test). "
+                 "Overfit: val peaked epoch 4 then declined; train loss 0.81. post-ply-10 32.4% on "
+                 "UNSEEN games (not directly comparable to frozen models that trained on the holdout).",
+    },
 }
 
 # Metadata keys we lift verbatim from a checkpoint when present.
