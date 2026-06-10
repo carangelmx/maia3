@@ -48,28 +48,46 @@ CURATED = {
         "notes": "v1: 23M, player-only, 2 unfrozen blocks; Elo 2155. Superseded by more-blocks (v2) "
                  "which wins the post-ply-10 gate.",
     },
-    "xml3gn4r4c_maia3-23m_v1": {
-        "version": "v1", "player": "xml3gn4r4c", "status": "deployed",
-        "metrics": {"post_ply10_top1": 0.265, "post_ply10_perplexity": 16.75,
-                    "middlegame_top1": 0.227, "opening_recall_top1": 0.675},
+    "xml3gn4r4c_maia3-23m_v2": {
+        "version": "v2", "player": "xml3gn4r4c", "status": "deployed",
+        "metrics": {"post_ply10_top1": 0.572, "post_ply10_perplexity": 3.82,
+                    "middlegame_top1": 0.569, "opening_recall_top1": 0.702},
         "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/"
-                     "xml3gn4r4c-twin-v1/xml3gn4r4c_maia3-23m_v1.pt",
-        "notes": "xml3gn4r4c (~2298 blitz): 23M full fine-tune, 4,988 games (newest 400 held out), "
-                 "Elo 2298. Post-ply-10 26.5% / ppl 16.75 on the unseen temporal test. "
-                 "Built via CREATE_A_TWIN.md.",
+                     "xml3gn4r4c-twin-v2/xml3gn4r4c_maia3-23m_v2.pt",
+        "notes": "v2 (DEPLOYED): pretrained-init full fine-tune @ lr 1e-5 (audit fix "
+                 "TRAINING_AUDIT_2026-06-09; v1 trained from random init). Elo 2298. "
+                 "Post-ply-10 57.2% / ppl 3.82 (v1: 26.5% / 16.75).",
+    },
+    "JavierSilvaIII_maia3-23m_v1": {
+        "version": "v1", "player": "JavierSilvaIII", "status": "deployed",
+        "metrics": {"post_ply10_top1": 0.621, "post_ply10_perplexity": 3.28,
+                    "middlegame_top1": 0.602, "opening_recall_top1": 0.835},
+        "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/"
+                     "JavierSilvaIII-twin-v1/JavierSilvaIII_maia3-23m_v1.pt",
+        "notes": "v1 (DEPLOYED): pretrained-init full fine-tune @ lr 1e-5 (LR-sweep winner). "
+                 "Elo 2551, newest 6,000 games (600 held out). Post-ply-10 62.1% / ppl 3.28 — "
+                 "beats the raw maia3-23m base (59.0% / 3.50) at the player's Elo.",
+    },
+    "carangelmx_maia3-23m_v4": {
+        "version": "v4", "player": "carangelmx", "status": "deployed",
+        "metrics": {"post_ply10_top1": 0.570, "post_ply10_perplexity": 3.85,
+                    "middlegame_top1": 0.543, "opening_recall_top1": 0.782},
+        "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/"
+                     "carangelmx-twin-v4/carangelmx_maia3-23m_v4.pt",
+        "notes": "v4 (DEPLOYED): pretrained-init full fine-tune @ lr 1e-5 (audit fix; v1-v3 "
+                 "trained from random init). Elo 2183. Post-ply-10 57.0% / ppl 3.85 (v3: ~29% / 15.3).",
     },
     "carangelmx_maia3-23m_v3": {
-        "version": "v3", "player": "carangelmx", "status": "deployed",
+        "version": "v3", "player": "carangelmx", "status": "previous",
         "metrics": {"post_ply10_top1": 0.294, "post_ply10_perplexity": 15.3,
                     "middlegame_top1": 0.262, "endgame_top1": 0.228},
         "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/"
                      "carangelmx-twin-v3/carangelmx_maia3-23m_v3.pt",
-        "notes": "v3 (DEPLOYED): 23M, FULL fine-tune (8 blocks), newest 6,000 games; Elo 2195. Wins "
-                 "the clean temporal future-test: post-ply-10 29.4% / ppl 15.3 vs ~25% / ppl 30 for "
-                 "frozen 2-4 block variants. Honest unseen-recent fidelity ~29%.",
+        "notes": "v3 (previous deploy): 23M, FULL fine-tune (8 blocks), newest 6,000 games; Elo 2195. "
+                 "Trained from RANDOM init (pre-audit-fix). Superseded by v4 (pretrained init).",
     },
     "carangelmx_maia3-23m_more-blocks": {
-        "version": "more-blocks", "status": "previous",
+        "version": "more-blocks", "status": "superseded",
         "metrics": {"opening_top1_match": 0.964, "opening_js": 0.0239,
                     "post_ply10_top1": 0.397, "middlegame_top1": 0.465},
         "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/"
@@ -93,6 +111,41 @@ CURATED = {
         "version": "longer", "status": "candidate",
         "metrics": {"opening_top1_match": 0.955, "opening_js": 0.0260},
         "notes": "Like corrected-baseline but 15 epochs. No opening gain over 10.",
+    },
+    "base_maia3-23m_elo2551": {
+        "version": "base-baseline", "status": "baseline",
+        "metrics": {"post_ply10_top1": 0.590, "post_ply10_perplexity": 3.50},
+        "notes": "Unmodified pretrained maia3-23m wrapped with player_elo 2551 — the audit's "
+                 "baseline on the JavierSilvaIII temporal test. Any twin must beat this.",
+    },
+    "JavierSilvaIII_lr1e-5": {
+        "version": "lr1e-5", "player": "JavierSilvaIII", "status": "candidate",
+        "metrics": {"post_ply10_top1": 0.621, "post_ply10_perplexity": 3.28},
+        "notes": "LR-sweep winner; identical content deployed as JavierSilvaIII v1.",
+    },
+    "JavierSilvaIII_lr3e-5": {
+        "version": "lr3e-5", "player": "JavierSilvaIII", "status": "candidate",
+        "metrics": {"post_ply10_top1": 0.616, "post_ply10_perplexity": 3.40},
+        "notes": "LR sweep: between 1e-4 (base parity) and 1e-5 (winner).",
+    },
+    "JavierSilvaIII_pretrained_blk2": {
+        "version": "blk2", "player": "JavierSilvaIII", "status": "candidate",
+        "metrics": {"post_ply10_top1": 0.620, "post_ply10_perplexity": 3.29},
+        "notes": "Freeze-sweep redo on pretrained init: 2 unfrozen blocks ~ ties full FT "
+                 "(the old +4pt full-FT win was a from-scratch artifact).",
+    },
+    "JavierSilvaIII_pretrained_blk4": {
+        "version": "blk4", "player": "JavierSilvaIII", "status": "candidate",
+        "metrics": {"post_ply10_top1": 0.612, "post_ply10_perplexity": 3.33},
+        "notes": "Freeze-sweep redo on pretrained init: 4 unfrozen blocks.",
+    },
+    "carangelmx_maia3-23m_temporal-2blk": {
+        "version": "temporal-2blk", "status": "superseded",
+        "notes": "Random-init era freeze sweep (pre-audit-fix).",
+    },
+    "carangelmx_maia3-23m_temporal-4blk": {
+        "version": "temporal-4blk", "status": "superseded",
+        "notes": "Random-init era freeze sweep (pre-audit-fix).",
     },
     "carangelmx_maia3-23m_full-ft": {
         "version": "full-ft", "status": "candidate",
