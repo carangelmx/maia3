@@ -113,10 +113,22 @@ CURATED = {
         "notes": "Like corrected-baseline but 15 epochs. No opening gain over 10.",
     },
     "base_maia3-23m_elo2551": {
-        "version": "base-baseline", "status": "baseline",
+        "version": "base-elo2551", "status": "baseline",
         "metrics": {"post_ply10_top1": 0.590, "post_ply10_perplexity": 3.50},
-        "notes": "Unmodified pretrained maia3-23m wrapped with player_elo 2551 — the audit's "
-                 "baseline on the JavierSilvaIII temporal test. Any twin must beat this.",
+        "notes": "Unmodified pretrained maia3-23m @ player_elo 2551 on the JavierSilvaIII "
+                 "temporal test. His twin beats it (+3.1).",
+    },
+    "base_maia3-23m_elo2298": {
+        "version": "base-elo2298", "status": "baseline",
+        "metrics": {"post_ply10_top1": 0.582, "post_ply10_perplexity": 3.48},
+        "notes": "Base @ Elo 2298 on the xml3gn4r4c temporal test. The v2 twin is -1.0 on the "
+                 "gate (57.2%) but +4.1 on opening recall.",
+    },
+    "base_maia3-23m_elo2183": {
+        "version": "base-elo2183", "status": "baseline",
+        "metrics": {"post_ply10_top1": 0.576, "post_ply10_perplexity": 3.56},
+        "notes": "Base @ Elo 2183 on the carangelmx temporal test. The v4 twin is -0.6 on the "
+                 "gate (57.0%) but +16 on opening recall.",
     },
     "JavierSilvaIII_lr1e-5": {
         "version": "lr1e-5", "player": "JavierSilvaIII", "status": "candidate",

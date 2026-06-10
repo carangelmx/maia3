@@ -1,8 +1,10 @@
 {
-  "generated_at": "2026-06-10T06:06:29",
+  "generated_at": "2026-06-10T06:18:37",
   "players": [
     "JavierSilvaIII",
     "base-maia3-23m",
+    "base-maia3-23m-elo2183",
+    "base-maia3-23m-elo2298",
     "carangelmx",
     "xml3gn4r4c"
   ],
@@ -473,19 +475,49 @@
       "status": "superseded"
     },
     {
+      "file": "checkpoints/base_maia3-23m_elo2183.pt",
+      "sha256": "668ac8aae48372873f5930a87802e6dd1ad48737ffb0c5d446022584d7a7d614",
+      "size_mb": 87.5,
+      "player_name": "base-maia3-23m-elo2183",
+      "base_model": "maia3-23m",
+      "player_elo": 2183,
+      "version": "base-elo2183",
+      "status": "baseline",
+      "metrics": {
+        "post_ply10_top1": 0.576,
+        "post_ply10_perplexity": 3.56
+      },
+      "notes": "Base @ Elo 2183 on the carangelmx temporal test. The v4 twin is -0.6 on the gate (57.0%) but +16 on opening recall."
+    },
+    {
+      "file": "checkpoints/base_maia3-23m_elo2298.pt",
+      "sha256": "33562177da13e324e2b567647e6d2dea10886b03c620bc3f241318d69bba8f77",
+      "size_mb": 87.5,
+      "player_name": "base-maia3-23m-elo2298",
+      "base_model": "maia3-23m",
+      "player_elo": 2298,
+      "version": "base-elo2298",
+      "status": "baseline",
+      "metrics": {
+        "post_ply10_top1": 0.582,
+        "post_ply10_perplexity": 3.48
+      },
+      "notes": "Base @ Elo 2298 on the xml3gn4r4c temporal test. The v2 twin is -1.0 on the gate (57.2%) but +4.1 on opening recall."
+    },
+    {
       "file": "checkpoints/base_maia3-23m_elo2551.pt",
       "sha256": "0bc5167be54c64b644fb92697ce9a8e1dcde0a2d6d5a6ec11987577365e624fc",
       "size_mb": 87.5,
       "player_name": "base-maia3-23m",
       "base_model": "maia3-23m",
       "player_elo": 2551,
-      "version": "base-baseline",
+      "version": "base-elo2551",
       "status": "baseline",
       "metrics": {
         "post_ply10_top1": 0.59,
         "post_ply10_perplexity": 3.5
       },
-      "notes": "Unmodified pretrained maia3-23m wrapped with player_elo 2551 \u2014 the audit's baseline on the JavierSilvaIII temporal test. Any twin must beat this."
+      "notes": "Unmodified pretrained maia3-23m @ player_elo 2551 on the JavierSilvaIII temporal test. His twin beats it (+3.1)."
     }
   ]
 }
