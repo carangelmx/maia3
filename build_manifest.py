@@ -52,8 +52,7 @@ CURATED = {
         "version": "v2", "player": "xml3gn4r4c", "status": "deployed",
         "metrics": {"post_ply10_top1": 0.572, "post_ply10_perplexity": 3.82,
                     "middlegame_top1": 0.569, "opening_recall_top1": 0.702},
-        "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/"
-                     "xml3gn4r4c-twin-v2/xml3gn4r4c_maia3-23m_v2.pt",
+        "local_path": "C:\\CR\\project\\maia3\\checkpoints\\xml3gn4r4c_maia3-23m_v2.pt",
         "notes": "v2 (DEPLOYED): pretrained-init full fine-tune @ lr 1e-5 (audit fix "
                  "TRAINING_AUDIT_2026-06-09; v1 trained from random init). Elo 2298. "
                  "Post-ply-10 57.2% / ppl 3.82 (v1: 26.5% / 16.75).",
@@ -62,8 +61,7 @@ CURATED = {
         "version": "v1", "player": "JavierSilvaIII", "status": "deployed",
         "metrics": {"post_ply10_top1": 0.621, "post_ply10_perplexity": 3.28,
                     "middlegame_top1": 0.602, "opening_recall_top1": 0.835},
-        "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/"
-                     "JavierSilvaIII-twin-v1/JavierSilvaIII_maia3-23m_v1.pt",
+        "local_path": "C:\\CR\\project\\maia3\\checkpoints\\JavierSilvaIII_maia3-23m_v1.pt",
         "notes": "v1 (DEPLOYED): pretrained-init full fine-tune @ lr 1e-5 (LR-sweep winner). "
                  "Elo 2551, newest 6,000 games (600 held out). Post-ply-10 62.1% / ppl 3.28 — "
                  "beats the raw maia3-23m base (59.0% / 3.50) at the player's Elo.",
@@ -72,8 +70,7 @@ CURATED = {
         "version": "v4", "player": "carangelmx", "status": "deployed",
         "metrics": {"post_ply10_top1": 0.570, "post_ply10_perplexity": 3.85,
                     "middlegame_top1": 0.543, "opening_recall_top1": 0.782},
-        "asset_url": "https://github.com/carangelmx/chesspredator_twin/releases/download/"
-                     "carangelmx-twin-v4/carangelmx_maia3-23m_v4.pt",
+        "local_path": "C:\\CR\\project\\maia3\\checkpoints\\carangelmx_maia3-23m_v4.pt",
         "notes": "v4 (DEPLOYED): pretrained-init full fine-tune @ lr 1e-5 (audit fix; v1-v3 "
                  "trained from random init). Elo 2183. Post-ply-10 57.0% / ppl 3.85 (v3: ~29% / 15.3).",
     },
