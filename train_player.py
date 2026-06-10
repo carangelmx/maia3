@@ -19,10 +19,9 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 
 from maia3.models import MAIA3Model
-from maia3.model_registry import MODEL_SPECS
+from maia3.model_registry import MODEL_SPECS, resolve_checkpoint_path
 from maia3.dataset import tokenize_board, get_legal_moves_mask, get_historical_tokens
 from maia3.utils import get_all_possible_moves, seed_everything
 
@@ -165,11 +164,15 @@ class PlayerGameDataset(Dataset):
                     is_player_turn = (not self.player_only) or (board.turn == player_clr)
                     if is_player_turn:
                         self.samples.append({
+                            "game_idx": gi,
                             "board_history": deque(board_history, maxlen=self.history_depth),
                             "played_move": move.uci() if board.turn == chess.WHITE else self._mirror_move(move.uci()),
                             "self_elo": white_elo if board.turn == chess.WHITE else black_elo,
                             "oppo_elo": black_elo if board.turn == chess.WHITE else white_elo,
-                            "result": result,
+                            # Value labels are [loss, draw, win] for the SIDE TO MOVE
+                            # (see uci.wdl_from_value_logits); result is White-POV,
+                            # so flip it on Black-to-move positions.
+                            "result": result if board.turn == chess.WHITE else 2 - result,
                         })
 
                     board.push(move)
@@ -236,6 +239,26 @@ class PlayerGameDataset(Dataset):
             "self_elo": self_elo,
             "oppo_elo": oppo_elo,
         }
+
+
+def load_pretrained_base(model, spec, device):
+    """Initialize the model from the published Maia-3 checkpoint (HF cache).
+
+    Transfer learning is the whole point of per-player fine-tuning (KDD 2022:
+    random init "had a significant negative effect"). Mirrors uci.load_model's
+    smolgen->gab key rename. Returns the resolved checkpoint path.
+    """
+    ckpt_path = resolve_checkpoint_path(spec)
+    ckpt = torch.load(ckpt_path, map_location=device, weights_only=True)
+    state_dict = ckpt["model_state_dict"] if isinstance(ckpt, dict) and "model_state_dict" in ckpt else ckpt
+    renamed = {k.replace("smolgen", "gab"): v for k, v in state_dict.items()}
+    missing, unexpected = model.load_state_dict(renamed, strict=False)
+    if missing:
+        logger.warning(f"base checkpoint missing keys: {missing[:5]}{'...' if len(missing) > 5 else ''}")
+    if unexpected:
+        logger.warning(f"base checkpoint unexpected keys: {unexpected[:5]}{'...' if len(unexpected) > 5 else ''}")
+    logger.info(f"Initialized from pretrained base: {ckpt_path}")
+    return ckpt_path
 
 
 def freeze_all_but_last_blocks(model, num_blocks_to_train=4):
@@ -335,6 +358,9 @@ def main():
     parser.add_argument("--history-depth", type=int, default=8, help="Board history depth")
     parser.add_argument("--num-blocks-to-train", type=int, default=2,
                         help="Trailing transformer blocks to unfreeze (D3). -1 = all (full fine-tune)")
+    parser.add_argument("--from-scratch", action="store_true",
+                        help="Skip loading the pretrained base checkpoint (random init). "
+                             "Only for baselines; fine-tuning loads base weights by default.")
     parser.add_argument("--all-positions", action="store_true",
                         help="Train on ALL positions incl. opponent moves (legacy). "
                              "Default trains only on the named player's own moves (D1).")
@@ -379,6 +405,15 @@ def main():
     model = MAIA3Model(cfg)
     model = model.to(device)
 
+    # Fine-tuning starts from the published Maia-3 weights. Random init is only
+    # for explicit from-scratch baselines (it cripples generalization — see
+    # docs/chesspredator_twin/TRAINING_AUDIT_2026-06-09.md).
+    base_ckpt_path = None
+    if args.from_scratch:
+        logger.warning("--from-scratch: training from RANDOM init (no transfer learning)")
+    else:
+        base_ckpt_path = load_pretrained_base(model, spec, device)
+
     # Build dataset
     all_moves = get_all_possible_moves()
     all_moves_dict = {move: i for i, move in enumerate(all_moves)}
@@ -400,10 +435,21 @@ def main():
         logger.error("No training samples loaded. Check PGN file.")
         return
 
-    # Split train/val
-    train_size = int(0.8 * len(dataset))
-    val_size = len(dataset) - train_size
-    train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
+    # Split train/val by GAME, not by position: a position-level split puts
+    # positions from the same game in both sets, so early stopping / best-epoch
+    # selection happens on leaked data (same confound as the test-set holdout).
+    import random as _random
+    game_ids = sorted({s["game_idx"] for s in dataset.samples})
+    _random.Random(args.seed).shuffle(game_ids)
+    n_val_games = max(1, len(game_ids) // 5) if len(game_ids) > 1 else 0
+    val_games = set(game_ids[:n_val_games])
+    train_idx = [i for i, s in enumerate(dataset.samples) if s["game_idx"] not in val_games]
+    val_idx = [i for i, s in enumerate(dataset.samples) if s["game_idx"] in val_games]
+    train_dataset = torch.utils.data.Subset(dataset, train_idx)
+    val_dataset = torch.utils.data.Subset(dataset, val_idx)
+    train_size, val_size = len(train_dataset), len(val_dataset)
+    logger.info(f"Game-level split: {len(game_ids) - n_val_games} train / "
+                f"{n_val_games} val games")
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
@@ -445,7 +491,7 @@ def main():
                     f"Train policy loss: {train_policy_loss:.4f}, value loss: {train_value_loss:.4f} | "
                     f"Val accuracy: {val_acc:.4f}")
 
-        if val_acc > best_val_acc:
+        if val_size == 0 or val_acc > best_val_acc:
             best_val_acc = val_acc
             epochs_since_improve = 0
             torch.save({
@@ -453,6 +499,8 @@ def main():
                 "player_elo": dataset.player_elo,
                 "player_name": args.player,
                 "base_model": args.base_model,
+                "init_weights": "random" if args.from_scratch else "pretrained",
+                "base_checkpoint": str(base_ckpt_path) if base_ckpt_path else None,
                 "num_blocks_to_train": args.num_blocks_to_train,
                 "player_only": not args.all_positions,
                 "epochs": args.epochs,
